@@ -5,6 +5,11 @@
 #include "QMediaPlayer"
 #include "QMediaPlaylist"
 #include "surface.h"
+#include "qpainter.h"
+#include "qlabel.h"
+
+#define LED_MODULE_PREV_WIDTH       600
+#define LED_MODULE_PREV_HEIGTH      8
 
 namespace Ui {
 class MainWindow;
@@ -23,6 +28,7 @@ public:
     void keyReleaseEvent(QKeyEvent *event);
     void generatePlaylist();
     void sendDataToModule();
+    void fillColor(uint8_t r, uint8_t g, uint8_t b);
 
 
 private slots:
@@ -51,14 +57,16 @@ private:
     QMediaPlaylist *playlist;
     QMediaPlayer *player;
     MyVideoSurface *surface;
-
+    QLabel *modulesprev;
+    bool showModulesPrev=0;
     QTimer *timer, *scanTimer, *playlistTimer, *oneSecUpdateTimer;
-
     QElapsedTimer *ledTimer;
-
     QElapsedTimer *elapsedTime;
-
     QUdpSocket *udpSocket;
+
+    uint8_t redMod=0, greenMod=0 ,blueMod=0;
+    bool strobing=0;
+    uint64_t strobeTimer=0,strobePeriod=100;
 
 };
 

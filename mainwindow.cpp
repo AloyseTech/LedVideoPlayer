@@ -40,7 +40,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    this->setWindowModality(Qt::WindowModal);
+    this->setWindowModality(Qt::ApplicationModal);
+    this->move(0,300);
 
     elapsedTime = new QElapsedTimer();
     elapsedTime->start();
@@ -69,6 +70,8 @@ MainWindow::MainWindow(QWidget *parent) :
     playlistTimer = new QTimer(this);
     connect(playlistTimer, SIGNAL(timeout()),this,SLOT(playlistTimeout()));
 
+
+
     oneSecUpdateTimer=new QTimer(this);
     oneSecUpdateTimer->setInterval(1000);
     connect(oneSecUpdateTimer, SIGNAL(timeout()),this,SLOT(oneSecUpdate()));
@@ -82,7 +85,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->animControlButton->setToolTip(tr("Control animation feeding"));
 
     ui->menuBar->show();
-
 
     QMovie *infeedLblMovie = new QMovie("/Users/TheoMeyer/Downloads/infeed-loading_R.gif");
     QMovie *outfeedLblMovie = new QMovie("/Users/TheoMeyer/Downloads/outfeed-loading_R.gif");
@@ -100,6 +102,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->txFpsLineEdit->setValidator(new QIntValidator(0, 100, this));
 
     ui->feedbackFpsLCD->display("0.0");
+
+    modulesprev = new QLabel();
+    modulesprev->move(0,0);
+    modulesprev->resize(4+LED_MODULE_PREV_WIDTH+4,4+NUM_LED_MODULES*(LED_MODULE_PREV_HEIGTH+4));
+    modulesprev->setWindowTitle("Modules Preview");
+    modulesprev->setWindowFlags(Qt::Tool);
 
 }
 
@@ -134,6 +142,7 @@ void MainWindow::on_animControlButton_clicked()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    modulesprev->close();
     player->stop();
     surface->onQuit();
 }
@@ -145,19 +154,53 @@ void MainWindow::sendDataToModuleSlot()
 
 void MainWindow::sendDataToModule()
 {
+    QPainter paint;
+    QImage buffer;
+
+    if(showModulesPrev)
+    {
+        buffer = QImage(QSize(4+LED_MODULE_PREV_WIDTH+4,4+NUM_LED_MODULES*(LED_MODULE_PREV_HEIGTH+4)),QImage::Format_RGB888);
+        buffer.fill(Qt::gray);
+        paint.begin(&buffer);
+    }
+
     QByteArray datagram;
     datagram.resize(LED_PER_MODULE*3+DATAGRAM_PREFIX_SIZE);
 
     datagram[0]=0xDA; //DAta command
 
+    uint8_t redValue=0,greenValue=0,blueValue=0;
+
+    if(strobePeriod>0 && elapsedTime->elapsed()-strobeTimer>strobePeriod)
+    {
+        strobeTimer=elapsedTime->elapsed();
+        strobing=1-strobing;
+    }
+
     for(int modIndex =0; modIndex<NUM_LED_MODULES; modIndex++)
     {
-        //memcpy(datagram.data_ptr(),ledModules[modIndex].pixelBuffer,LED_PER_MODULE*3);
         for(int ledIndex = 0; ledIndex<LED_PER_MODULE; ledIndex++)
         {
-            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex]=ledModules[modIndex].pixelBuffer[3*ledIndex];
-            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+1]=ledModules[modIndex].pixelBuffer[3*ledIndex+1];
-            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+2]=ledModules[modIndex].pixelBuffer[3*ledIndex+2];
+            redValue=redMod>0?redMod:ledModules[modIndex].pixelBuffer[3*ledIndex];
+            greenValue=greenMod>0?greenMod:ledModules[modIndex].pixelBuffer[3*ledIndex+1];
+            blueValue=blueMod>0?blueMod:ledModules[modIndex].pixelBuffer[3*ledIndex+2];
+
+            if(strobing)
+            {
+                redValue=0;
+                greenValue=0;
+                blueValue=0;
+            }
+
+            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex]=redValue;
+            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+1]=greenValue;
+            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+2]=blueValue;
+
+            if(showModulesPrev)
+            {
+                paint.fillRect(4+ledIndex*LED_MODULE_PREV_WIDTH/LED_PER_MODULE,4+modIndex*(LED_MODULE_PREV_HEIGTH+4),LED_MODULE_PREV_WIDTH/LED_PER_MODULE,
+                               LED_MODULE_PREV_HEIGTH,QColor((uint8_t)redValue,(uint8_t)greenValue,(uint8_t)blueValue));
+            }
         }
 
         if(ui->gammaCheckBox->checkState())
@@ -173,6 +216,13 @@ void MainWindow::sendDataToModule()
         //SEND UDP PACKET HERE
         udpSocket->writeDatagram(datagram.data(), datagram.size(), QHostAddress(ledModules[modIndex].IP), 8888);
 
+    }
+
+    if(showModulesPrev)
+    {
+        paint.end();
+        modulesprev->setPixmap(QPixmap::fromImage(buffer));
+        modulesprev->update();
     }
 }
 
@@ -329,7 +379,10 @@ void MainWindow::on_animPrevCheckBox_stateChanged(int arg1)
 
 void MainWindow::on_modulePrevCheckBox_stateChanged(int arg1)
 {
-    surface->setShowModulesPrev(arg1);
+    showModulesPrev=arg1;
+
+    if(showModulesPrev)modulesprev->show();
+    else modulesprev->close();
 }
 
 void MainWindow::on_playlistComboBox_currentIndexChanged(int index)
@@ -420,59 +473,40 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     {
         if(!event->isAutoRepeat())
         {
-            if(surface->getStrobePeriod()==0)
-                surface->setStrobePeriod(200);
-
-            qDebug()<<"Enable strobe";
+            strobePeriod=100;
         }
     }
     else if (event->key() == Qt::Key_W)
     {
-        surface->setRed(255);
-        surface->setGreen(255);
-        surface->setBlue(255);
+        fillColor(255,255,255);
     }
     else if (event->key() == Qt::Key_Q)
     {
-        surface->setRed(255);
-        surface->setGreen(1);
-        surface->setBlue(1);
+        fillColor(255,1,1);
     }
     else if (event->key() == Qt::Key_S)
     {
-        surface->setRed(1);
-        surface->setGreen(255);
-        surface->setBlue(1);
+        fillColor(1,255,1);
     }
     else if (event->key() == Qt::Key_D)
     {
-        surface->setRed(1);
-        surface->setGreen(1);
-        surface->setBlue(255);
+        fillColor(1,1,255);
     }
     else if (event->key() == Qt::Key_X)
     {
-        surface->setRed(255);
-        surface->setGreen(255);
-        surface->setBlue(1);
+        fillColor(255,255,1);
     }
     else if (event->key() == Qt::Key_C)
     {
-        surface->setRed(1);
-        surface->setGreen(255);
-        surface->setBlue(255);
+        fillColor(1,255,255);
     }
     else if (event->key() == Qt::Key_V)
     {
-        surface->setRed(255);
-        surface->setGreen(1);
-        surface->setBlue(255);
+        fillColor(255,1,255);
     }
     else if (event->key() == Qt::Key_B)
     {
-        surface->setRed(1);
-        surface->setGreen(1);
-        surface->setBlue(1);
+        fillColor(1,1,1);
     }
 }
 
@@ -481,14 +515,12 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     int k = event->key();
     if (k == Qt::Key_Space)
     {
-        if(surface->getStrobePeriod()>0)
-            surface->setStrobePeriod(0);
+        strobePeriod=0;
+        strobing=false;
     }
     else if (k == Qt::Key_W || k == Qt::Key_Q || k== Qt::Key_S || Qt::Key_D || Qt::Key_X || Qt::Key_C || Qt::Key_V || Qt::Key_B)
     {
-        surface->setRed(0);
-        surface->setGreen(0);
-        surface->setBlue(0);
+        fillColor(0,0,0);
     }
 }
 
@@ -557,10 +589,21 @@ void MainWindow::generatePlaylist()
 void MainWindow::oneSecUpdate()
 {
     float avgFps=0.0;
-    for(int i=0; i<activeModules;i++)
-        avgFps+=ledModules[i].fps;
-    avgFps/=activeModules;
-    if(avgFps<1.0)
-        avgFps=0;
+    if(activeModules>0)
+    {
+        for(int i=0; i<activeModules;i++)
+            avgFps+=ledModules[i].fps;
+        avgFps/=activeModules;
+        if(avgFps<1.0)
+            avgFps=0;
+    }
     ui->feedbackFpsLCD->display(avgFps);
 }
+
+void MainWindow::fillColor(uint8_t r, uint8_t g, uint8_t b)
+{
+    redMod=r;
+    greenMod=g;
+    blueMod=b;
+}
+

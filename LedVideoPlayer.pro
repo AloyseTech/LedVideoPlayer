@@ -23,3 +23,6 @@ HEADERS  += mainwindow.h \
     ledbar.h
 
 FORMS    += mainwindow.ui
+
+QMAKE_AR += -v
+
