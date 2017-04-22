@@ -11,7 +11,7 @@ public:
 
     uint8_t pixelBuffer[3*LED_PER_MODULE];
 
-    uint8_t status=0,ID=0;
+    uint8_t status=0,ID=255;
 
     uint8_t fps=0;
 

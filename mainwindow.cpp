@@ -85,9 +85,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->animControlButton->setToolTip(tr("Control animation feeding"));
 
     ui->menuBar->show();
+    QString gifPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)+"/SubtroLedPlaylist/";
 
-    QMovie *infeedLblMovie = new QMovie("/Users/TheoMeyer/Downloads/infeed-loading_R.gif");
-    QMovie *outfeedLblMovie = new QMovie("/Users/TheoMeyer/Downloads/outfeed-loading_R.gif");
+    QMovie *infeedLblMovie = new QMovie(gifPath + "infeed-loading_R.gif");
+    QMovie *outfeedLblMovie = new QMovie(gifPath + "outfeed-loading_R.gif");
 
     ui->infeedLoadingLabel->setMovie(infeedLblMovie);
     ui->infeedLoadingLabel->close();
@@ -100,6 +101,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->playlistComboBox->setFocus();
 
     ui->txFpsLineEdit->setValidator(new QIntValidator(0, 100, this));
+    ui->bpmLineEdit->setValidator(new QIntValidator(50, 200, this));
 
     ui->feedbackFpsLCD->display("0.0");
 
@@ -125,6 +127,8 @@ void MainWindow::on_animControlButton_clicked()
 {
     if(player->state() == QMediaPlayer::PausedState || player->state()==QMediaPlayer::StoppedState)
     {
+        if(ui->bpmLineEdit->text().toInt()>=50 && ui->bpmLineEdit->text().toInt()<=200)
+            player->setPlaybackRate((ui->bpmLineEdit->text().toDouble()/120.0));
         player->play();
         qDebug()<<"play!";
         ui->animControlButton->setText("||");
@@ -177,7 +181,7 @@ void MainWindow::sendDataToModule()
         strobing=1-strobing;
     }
 
-    for(int modIndex =0; modIndex<NUM_LED_MODULES; modIndex++)
+    for(int modIndex =0; modIndex<activeModules; modIndex++)
     {
         for(int ledIndex = 0; ledIndex<LED_PER_MODULE; ledIndex++)
         {
@@ -185,16 +189,30 @@ void MainWindow::sendDataToModule()
             greenValue=greenMod>0?greenMod:ledModules[modIndex].pixelBuffer[3*ledIndex+1];
             blueValue=blueMod>0?blueMod:ledModules[modIndex].pixelBuffer[3*ledIndex+2];
 
+            /*redValue/=double(0.8*ui->brightnessSlider->value());
+            greenValue/=double(0.8*ui->brightnessSlider->value());
+            blueValue/=double(0.8*ui->brightnessSlider->value());
+            */
+
             if(strobing)
             {
                 redValue=0;
                 greenValue=0;
                 blueValue=0;
             }
+            if(ui->gammaCheckBox->checkState())
+            {
+                datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex]=gamma8[redValue];
+                datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+1]=gamma8[greenValue];
+                datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+2]=gamma8[blueValue];
+            }
+            else
+            {
+                datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex]=redValue;
+                datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+1]=greenValue;
+                datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+2]=blueValue;
+            }
 
-            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex]=redValue;
-            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+1]=greenValue;
-            datagram[DATAGRAM_PREFIX_SIZE+3*ledIndex+2]=blueValue;
 
             if(showModulesPrev)
             {
@@ -203,7 +221,7 @@ void MainWindow::sendDataToModule()
             }
         }
 
-        if(ui->gammaCheckBox->checkState())
+        if(0 && ui->gammaCheckBox->checkState())
         {
             for(int ledIndex = 0; ledIndex<LED_PER_MODULE; ledIndex++)
             {
@@ -214,6 +232,7 @@ void MainWindow::sendDataToModule()
         }
 
         //SEND UDP PACKET HERE
+        if(ledModules[modIndex].valid)
         udpSocket->writeDatagram(datagram.data(), datagram.size(), QHostAddress(ledModules[modIndex].IP), 8888);
 
     }
@@ -243,23 +262,24 @@ void MainWindow::processPendingDatagrams()
                     | (datagram[3]<<8&0x0000FF00)
                     | (datagram[4]&0x000000FF);
 
-            ledModules[activeModules].IP=QHostAddress(ip4address);
-            ledModules[activeModules].ID=datagram[5];
 
-            qDebug()<<ledModules[activeModules].IP;
-            qDebug()<<ledModules[activeModules].ID;
 
-            if(ledModules[activeModules].ID > 0)
+            qDebug()<<QHostAddress(ip4address);
+            qDebug()<<datagram[5];
+
+            if(int(datagram[5]) > 0)
             {
-                for(int k=0; k<activeModules-1;k++)
+                for(int k=0; k<activeModules;k++)
                 {
-                    if(ledModules[k].ID==ledModules[activeModules].ID)
+                    if(ledModules[k].ID==int(datagram[5]))
                     {
                         //ID already exists on the network...
                         qDebug()<<"The ID "<<QString::number(datagram[5])<<" already exists on the network...";
                         return;
                     }
                 }
+                ledModules[activeModules].IP=QHostAddress(ip4address);
+                ledModules[activeModules].ID=datagram[5];
                 ui->ipList->addItem("ID:" + QString::number(ledModules[activeModules].ID) + " - IP:" + QString(QHostAddress(ip4address).toString()));
                 ledModules[activeModules].valid=true;
                 activeModules++;
@@ -295,8 +315,8 @@ void MainWindow::on_txControlButton_clicked()
             timer->start(1000.0/ui->txFpsLineEdit->text().toInt());
         else
         {
-            timer->start(1000.0/20.0);
-            ui->txFpsLineEdit->setText(tr("20"));
+            timer->start(1000.0/40.0);
+            ui->txFpsLineEdit->setText(tr("40"));
         }
 
         ui->statusBar->showMessage("Wireless transmission started !",3000);
@@ -335,7 +355,7 @@ void MainWindow::on_scanButton_clicked()
     activeModules=0;
     for(int i =0; i<NUM_LED_MODULES;i++)
     {
-        ledModules[i].ID=0;
+        ledModules[i].ID=255;
         ledModules[i].valid=false;
     }
 
@@ -354,10 +374,23 @@ void MainWindow::on_scanButton_clicked()
 void MainWindow::scanTimeout()
 {
     ui->scanProgressBar->setValue(ui->scanProgressBar->value()+10);
+    if(ui->scanProgressBar->value()%250==0)
+    {
+        QByteArray datagram;
+        datagram.resize(1);
+        datagram[0]=0xDE;
+        udpSocket->writeDatagram(datagram.data(), datagram.size(), QHostAddress::Broadcast, 8888);
+    }
 
     if(ui->scanProgressBar->value()>=ui->scanProgressBar->maximum())
     {
         scanTimer->stop();
+
+        sortModule();
+        ui->ipList->clear();
+        for(int i = 0; i<activeModules; i++)
+            ui->ipList->addItem("ID:" + QString::number(ledModules[i].ID) + " - IP:" + QString(ledModules[i].IP.toString()));
+
 
         ui->outputGroupBox->setEnabled(1);
         ui->inputGroupBox->setEnabled(1);
@@ -607,3 +640,28 @@ void MainWindow::fillColor(uint8_t r, uint8_t g, uint8_t b)
     blueMod=b;
 }
 
+void MainWindow::sortModule() {
+    for(int i = 0; i<NUM_LED_MODULES; i++)
+        qDebug()<<ledModules[i].ID;
+    bool swapped = true;
+
+    int j = 0;
+
+    LedBar tmp;
+
+    while (swapped) {
+        swapped = false;
+        j++;
+        for (int i = 0; i < NUM_LED_MODULES - j; i++) {
+            if (ledModules[i].ID > ledModules[i + 1].ID) {
+                tmp = ledModules[i];
+                ledModules[i] = ledModules[i + 1];
+                ledModules[i + 1] = tmp;
+                swapped = true;
+            }
+        }
+    }
+
+    for(int i = 0; i<NUM_LED_MODULES; i++)
+        qDebug()<<ledModules[i].ID;
+}

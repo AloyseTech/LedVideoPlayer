@@ -29,6 +29,7 @@ public:
     void generatePlaylist();
     void sendDataToModule();
     void fillColor(uint8_t r, uint8_t g, uint8_t b);
+    void sortModule();
 
 
 private slots:
@@ -66,7 +67,7 @@ private:
 
     uint8_t redMod=0, greenMod=0 ,blueMod=0;
     bool strobing=0;
-    uint64_t strobeTimer=0,strobePeriod=100;
+    uint64_t strobeTimer=0,strobePeriod=0;
 
 };
 
