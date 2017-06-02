@@ -189,10 +189,14 @@ void MainWindow::sendDataToModule()
             greenValue=greenMod>0?greenMod:ledModules[modIndex].pixelBuffer[3*ledIndex+1];
             blueValue=blueMod>0?blueMod:ledModules[modIndex].pixelBuffer[3*ledIndex+2];
 
-            /*redValue/=double(0.8*ui->brightnessSlider->value());
-            greenValue/=double(0.8*ui->brightnessSlider->value());
-            blueValue/=double(0.8*ui->brightnessSlider->value());
-            */
+            if(ui->brightnessSlider->value()>1)
+            {
+                redValue/=double(0.8*ui->brightnessSlider->value());
+                greenValue/=double(0.8*ui->brightnessSlider->value());
+                blueValue/=double(0.8*ui->brightnessSlider->value());
+            }
+
+
 
             if(strobing)
             {
@@ -472,10 +476,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Left)
     {
         qDebug()<<"Left";
+        ui->brightnessSlider->setValue(ui->brightnessSlider->value()+1);
     }
     else if (event->key() == Qt::Key_Right)
     {
         qDebug()<<"Right";
+        ui->brightnessSlider->setValue(ui->brightnessSlider->value()-1);
     }
     else if (event->key() == Qt::Key_Up)
     {
