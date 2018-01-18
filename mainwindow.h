@@ -53,6 +53,8 @@ private slots:
     void on_animDurationSlider_valueChanged(int value);
     void oneSecUpdate();
 
+    void on_brightnessSlider_sliderMoved(int position);
+
 private:
     Ui::MainWindow *ui;
     QMediaPlaylist *playlist;

@@ -189,12 +189,19 @@ void MainWindow::sendDataToModule()
             greenValue=greenMod>0?greenMod:ledModules[modIndex].pixelBuffer[3*ledIndex+1];
             blueValue=blueMod>0?blueMod:ledModules[modIndex].pixelBuffer[3*ledIndex+2];
 
+            /*
             if(ui->brightnessSlider->value()>1)
             {
                 redValue/=double(0.8*ui->brightnessSlider->value());
                 greenValue/=double(0.8*ui->brightnessSlider->value());
                 blueValue/=double(0.8*ui->brightnessSlider->value());
             }
+            */
+
+            redValue=(float)(redValue*ui->brightnessSlider->value()/100.0);
+            greenValue=(float)(greenValue*ui->brightnessSlider->value()/100.0);
+            blueValue=(float)(blueValue*ui->brightnessSlider->value()/100.0);
+
 
 
 
@@ -607,7 +614,7 @@ void MainWindow::generatePlaylist()
 
     }
 
-    QDirIterator it(playlistLocation, QStringList() << "*.mp4", QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator it(playlistLocation, QStringList() << "*.mp4", QDir::Files, 0 /*QDirIterator::Subdirectories*/);
     if(!it.hasNext())
         qDebug()<<"Playlist directory is empty";
 
@@ -670,4 +677,9 @@ void MainWindow::sortModule() {
 
     for(int i = 0; i<NUM_LED_MODULES; i++)
         qDebug()<<ledModules[i].ID;
+}
+
+void MainWindow::on_brightnessSlider_sliderMoved(int position)
+{
+
 }
