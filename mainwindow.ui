@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>320</height>
+    <height>400</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,28 +18,28 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>532</width>
-    <height>320</height>
+    <width>600</width>
+    <height>400</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>600</width>
-    <height>320</height>
+    <height>400</height>
    </size>
   </property>
   <property name="focusPolicy">
    <enum>Qt::StrongFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>Subtronic Led Video Streaming</string>
+   <string>Subtronic Stems Field</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QGroupBox" name="inputGroupBox">
+   <widget class="QGroupBox" name="playerGroupBox">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>0</y>
+      <y>60</y>
       <width>341</width>
       <height>151</height>
      </rect>
@@ -48,7 +48,7 @@
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="title">
-     <string>Input feed</string>
+     <string>Player</string>
     </property>
     <widget class="QPushButton" name="animControlButton">
      <property name="geometry">
@@ -65,54 +65,6 @@
      <property name="text">
       <string>&gt;</string>
      </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>100</y>
-       <width>181</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
-     <property name="title">
-      <string>Preview</string>
-     </property>
-     <widget class="QCheckBox" name="modulePrevCheckBox">
-      <property name="geometry">
-       <rect>
-        <x>100</x>
-        <y>20</y>
-        <width>81</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
-      </property>
-      <property name="text">
-       <string>Modules</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="animPrevCheckBox">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>87</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
-      </property>
-      <property name="text">
-       <string>Animation</string>
-      </property>
-     </widget>
     </widget>
     <widget class="QPushButton" name="previousAnimButton">
      <property name="geometry">
@@ -331,7 +283,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>160</y>
+      <y>220</y>
       <width>341</width>
       <height>101</height>
      </rect>
@@ -517,9 +469,9 @@
    <widget class="QProgressBar" name="scanProgressBar">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>370</x>
       <y>250</y>
-      <width>171</width>
+      <width>211</width>
       <height>23</height>
      </rect>
     </property>
@@ -536,9 +488,9 @@
    <widget class="QListWidget" name="ipList">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>360</x>
       <y>10</y>
-      <width>171</width>
+      <width>231</width>
       <height>211</height>
      </rect>
     </property>
@@ -552,9 +504,9 @@
    <widget class="QPushButton" name="scanButton">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>360</x>
       <y>220</y>
-      <width>171</width>
+      <width>231</width>
       <height>32</height>
      </rect>
     </property>
@@ -572,6 +524,93 @@
     </property>
     <property name="flat">
      <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="inputGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>0</y>
+      <width>341</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Input</string>
+    </property>
+    <widget class="QComboBox" name="switchComboBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>321</width>
+       <height>26</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>280</y>
+      <width>221</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="title">
+     <string>Preview</string>
+    </property>
+    <widget class="QCheckBox" name="modulePrevCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>20</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="text">
+      <string>Modules</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="animPrevCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>87</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="text">
+      <string>Animation</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>330</y>
+      <width>581</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Keys : ⇄ Player Switch ⇅ Bright [SPACE] Strob [W] White [B] Black [Q] Red [S] Green [D] Blue</string>
     </property>
    </widget>
   </widget>

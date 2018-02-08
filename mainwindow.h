@@ -8,6 +8,14 @@
 #include "qpainter.h"
 #include "qlabel.h"
 
+// add by Taktik
+#include <QtWidgets>
+#include <QCamera>
+#include <QCameraViewfinder>
+#include <QCameraImageCapture>
+#include <QCameraInfo>
+#include <QMenu>
+
 #define LED_MODULE_PREV_WIDTH       600
 #define LED_MODULE_PREV_HEIGTH      8
 
@@ -23,7 +31,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void update();
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *);
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
     void generatePlaylist();
@@ -42,7 +50,7 @@ private slots:
     void on_animPrevCheckBox_stateChanged(int arg1);
     void on_modulePrevCheckBox_stateChanged(int arg1);
     void on_playlistComboBox_currentIndexChanged(int index);
-    void on_animDurationSlider_sliderMoved(int position);
+    void on_animDurationSlider_sliderMoved();
     void on_autoAnimRadioButton_clicked(bool checked);
     void on_soloAnimRadioButton_clicked(bool checked);
     void updatePlaylistComboIndex(int index);
@@ -52,8 +60,10 @@ private slots:
     void on_fixedDurationRadioButton_toggled(bool checked);
     void on_animDurationSlider_valueChanged(int value);
     void oneSecUpdate();
+    //void on_brightnessSlider_sliderMoved(int position);
 
-    void on_brightnessSlider_sliderMoved(int position);
+    void initCamera();
+    void updateCameraDevice(int index);
 
 private:
     Ui::MainWindow *ui;
@@ -70,6 +80,10 @@ private:
     uint8_t redMod=0, greenMod=0 ,blueMod=0;
     bool strobing=0;
     uint64_t strobeTimer=0,strobePeriod=0;
+
+    QCamera *camera;
+    //QCameraViewfinder *viewfinder;
+    //QCameraImageCapture *imageCapture;
 
 };
 

@@ -61,6 +61,8 @@ MainWindow::MainWindow(QWidget *parent) :
     player->setPlaybackRate(1);
     //player->play();
 
+    initCamera();
+
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(sendDataToModuleSlot()));
 
@@ -69,8 +71,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     playlistTimer = new QTimer(this);
     connect(playlistTimer, SIGNAL(timeout()),this,SLOT(playlistTimeout()));
-
-
 
     oneSecUpdateTimer=new QTimer(this);
     oneSecUpdateTimer->setInterval(1000);
@@ -144,7 +144,7 @@ void MainWindow::on_animControlButton_clicked()
     }
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void MainWindow::closeEvent(QCloseEvent *)
 {
     modulesprev->close();
     player->stop();
@@ -360,6 +360,7 @@ void MainWindow::on_scanButton_clicked()
 
     ui->outputGroupBox->setEnabled(0);
     ui->inputGroupBox->setEnabled(0);
+    ui->playerGroupBox->setEnabled(0);
 
 
     ui->ipList->clear();
@@ -405,6 +406,7 @@ void MainWindow::scanTimeout()
 
         ui->outputGroupBox->setEnabled(1);
         ui->inputGroupBox->setEnabled(1);
+        ui->playerGroupBox->setEnabled(1);
 
         ui->scanButton->setText("Scan for devices");
         ui->scanButton->setDisabled(0);
@@ -434,7 +436,7 @@ void MainWindow::on_playlistComboBox_currentIndexChanged(int index)
     playlist->setCurrentIndex(index);
 }
 
-void MainWindow::on_animDurationSlider_sliderMoved(int position)
+void MainWindow::on_animDurationSlider_sliderMoved()
 {
     QToolTip::showText(ui->animDurationSlider->mapToGlobal(QPoint(0,0)),
                        QString::number(ui->animDurationSlider->value()) + " seconds" );
@@ -483,12 +485,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Left)
     {
         qDebug()<<"Left";
-        ui->brightnessSlider->setValue(ui->brightnessSlider->value()+1);
+        ui->brightnessSlider->setValue(ui->brightnessSlider->value()-1);
     }
     else if (event->key() == Qt::Key_Right)
     {
         qDebug()<<"Right";
-        ui->brightnessSlider->setValue(ui->brightnessSlider->value()-1);
+        ui->brightnessSlider->setValue(ui->brightnessSlider->value()+1);
     }
     else if (event->key() == Qt::Key_Up)
     {
@@ -608,7 +610,7 @@ void MainWindow::generatePlaylist()
     }
     else
     {
-        qDebug()<<"No plalist folder";
+        qDebug()<<"No playlist folder";
         if(QDir().mkdir(playlistLocation))
             qDebug()<<"Playlist folder created";
 
@@ -679,7 +681,52 @@ void MainWindow::sortModule() {
         qDebug()<<ledModules[i].ID;
 }
 
-void MainWindow::on_brightnessSlider_sliderMoved(int position)
+void MainWindow::initCamera()
 {
 
+    // Ajouter player par defaut
+    ui->switchComboBox->addItem("Player");
+
+    // Ajouter liste des devices  au menu
+    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
+    foreach (const QCameraInfo &cameraInfo, cameras) {
+
+            ui->switchComboBox->addItem(cameraInfo.description());
+    }
+
+    connect(ui->switchComboBox,  SIGNAL(currentIndexChanged(int)), this, SLOT(updateCameraDevice(int)));
+
+
+    camera = new QCamera();
+    //camera->setViewfinder(surface);
+    //viewfinder = new QCameraViewfinder();
+    //viewfinder->show();
+    //imageCapture = new QCameraImageCapture(camera);
+}
+
+void MainWindow::updateCameraDevice(int index)
+{
+    if(camera->isAvailable())camera->stop();
+    player->stop();
+
+    if(index != 0){
+        QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
+
+        camera = new QCamera(cameras[index-1]);
+        camera->setCaptureMode(QCamera::CaptureStillImage);
+        camera->setViewfinder(surface);
+
+        //ui->animControlButton->setDisabled(1);
+        ui->playerGroupBox->setEnabled(0);
+        camera->start();
+
+    }
+    else {
+
+        //ui->animControlButton->setDisabled(0);
+        ui->playerGroupBox->setEnabled(1);
+        player->setVideoOutput(surface);
+        player->setPlaybackRate(1);
+        player->play();
+    }
 }
