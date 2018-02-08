@@ -26,7 +26,9 @@ bool MyVideoSurface::present(const QVideoFrame &frame)
     //Q_UNUSED(frame);
     QVideoFrame cloneFrame(frame);
     cloneFrame.map(QAbstractVideoBuffer::ReadOnly);
-    const QImage img(cloneFrame.bits(),cloneFrame.width(),cloneFrame.height(),QImage::Format_ARGB32);
+    //cloneFrame.
+    const QImage imgSrc(cloneFrame.bits(),cloneFrame.width(),cloneFrame.height(),QImage::Format_ARGB32);
+    const QImage img(imgSrc.scaledToWidth(150));
 
     for(int Y = 0; Y < img.height(); Y++)
     {
@@ -84,7 +86,7 @@ bool MyVideoSurface::present(const QVideoFrame &frame)
     */
     if(showFullPrev)
     {
-        fullprev.setPixmap(QPixmap::fromImage(img.scaled(300,300,Qt::IgnoreAspectRatio,Qt::FastTransformation)));
+        fullprev.setPixmap(QPixmap::fromImage(img.scaled(300,300)));
         fullprev.update();
     }
 
