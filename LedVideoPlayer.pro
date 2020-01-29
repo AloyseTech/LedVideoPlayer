@@ -26,3 +26,4 @@ FORMS    += mainwindow.ui
 
 QMAKE_AR += -v
 
+mac: QMAKE_INFO_PLIST = Info.plist
